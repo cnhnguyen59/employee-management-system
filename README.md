@@ -2,7 +2,7 @@
   
   ## Description
   
-  CLI that allowes managers to keep track of their employees
+  CLI that allows managers to keep track of their employees
 
   - [Installation](#install)
   - [Usage](#usage)
