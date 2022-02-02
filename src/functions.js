@@ -1,6 +1,7 @@
 const inquirer = require('inquirer')
 const questions = require('./questions')
 const mysql = require('mysql2')
+const util = require('util')
 const Employee = require('../../../week10/team-profile-generator/lib/employee')
 
 const db = mysql.createConnection(
@@ -17,6 +18,7 @@ function view(action){
 
     db.query (`SELECT * FROM ${option}`, (err, results) =>
     err ? console.log(err) : console.log(results))
+    
 }
 
 function add(action){
@@ -85,6 +87,7 @@ function addRole(){
 }
 
 function addEmployee(){
+
     db.query (`SELECT id, title, department_id FROM role`, (err, rows) => {
         if (err){
             console.log('Error occured getting data')
@@ -96,51 +99,53 @@ function addEmployee(){
             let titleArr = roleInfo.map((role => {
                 return role.title
             }))
-        db.query (`SELECT first_name, last_name FROM employee`, (err, rows) => {
-            if (err){
-                console.log('Error occured getting data')
-            } else {
-                    let employees = setValue(rows);
+
+
+            db.query (`SELECT first_name, last_name FROM employee`, (err, rows)=>{
+                if (err){
+                    console.log('Error occurred getting data')
+                }else{
+
+                    let employees = setValue(rows)
                     let managersArr = employees.map((employee => {
                         return `${employee.first_name} ${employee.last_name}`
                     }))
                     managersArr.unshift('None')
-
+                    
                     questions.employee.push({
+                        type:'list',
+                        name:'title',
+                        message:'Select role:',
+                        choices: titleArr
+                    }, {
                         type: 'list',
                         name: 'manager',
                         Message: 'Select manager:',
                         choices: managersArr
                     })
+
+                   inquirer
+                    .prompt(questions.employee)
+                    .then(data =>
+                        {  
+                            console.log('after inquirer' + managersArr)
+                            let depId = departmentIdArr[titleArr.indexOf(data.title)]
+                            let roleId = titleArr.indexOf(data.title) + 1
+                            let managerId = managersArr.indexOf(data.manager)
+                            console.log(managerId)
+                             if (managerId == 0){
+                                managerId = null
+                            } 
+                            db.query(`INSERT INTO employee (first_name, last_name, role_id, department_id, manager_id) VALUES ('${data.firstName}', '${data.lastName}',${roleId}, ${depId}, ${managerId})`, (err) => {
+                                err ? console.log(err) : console.log('New employee added')
+                            }) 
+                        })
                 }
             })
         
-            questions.employee.push({
-                type:'list',
-                name:'title',
-                message:'Select role:',
-                choices: titleArr
-            })
-            
-            inquirer
-                .prompt(questions.employee)
-                .then(data =>
-                    {  
-                        let depId = departmentIdArr[titleArr.indexOf(data.title)]
-                        let roleId = titleArr.indexOf(data.title) + 1
-                        /* let managerId = /* managerArr.indexOf(data.manager) */
-                       /*  if (managerId == 0){
-                            managerId = null
-                        } */
-
-                        console.log(managersArr)
-                        db.query(`INSERT INTO employee (first_name, last_name, role_id, department_id, manager_id) VALUES ('${data.firstName}', '${data.lastName}',${roleId}, ${depId}, 1`, (err) => {
-                            err ? console.log(err) : console.log('New employee added')
-                        }) 
-                    })
         }
-    })
-
+    }
+    )
 }
 
 function setValue(value){
@@ -148,6 +153,48 @@ function setValue(value){
     return arr;
 }
 
+function getMainMenu(){
+    inquirer
+        .prompt(questions.mainMenu)
+        .then(data =>{ 
+            if(data.action == 'Quit'){
+                console.log('Goodbye!');
+            }else if (data.action.includes('View')){
+                view(data.action)
+            } else if (data.action.includes('Add')) {
+                add(data.action)
+            } else {
+                update()
+            }
+        })
+}
+
+/* async function getManagers(){
+    db.query (`SELECT first_name, last_name FROM employee`,(err, rows) => {
+    if (err){
+        console.log('Error occured getting data')
+    } else {
+            let employees = setValue(rows);
+            let managersArr = employees.map((employee => {
+                return `${employee.first_name} ${employee.last_name}`
+            }))
+            managersArr.unshift('None')
+            return managersArr;
+            }})
+
+        } */
+
+/* async function addEmployeeQuestions() {
+    try{
+        let roleInfo = await db.query (`SELECT id, title, department_id FROM role`)
+        let employees = await db.query (`SELECT first_name, last_name FROM employee`)
+        console.log(roleInfo)
+        console.log(employees)
+    } finally{
+
+    }
+} */
 
 module.exports.view = view;
 module.exports.add = add;
+module.exports.getMainMenu = getMainMenu;
