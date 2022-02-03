@@ -18,7 +18,8 @@ function view(action){
 
     db.query (`SELECT * FROM ${option}`, (err, results) =>
     err ? console.log(err) : console.log(results))
-    
+
+    getMainMenu()
 }
 
 function add(action){
@@ -36,23 +37,80 @@ function add(action){
                         err ? console.log(err) : console.log('New department added')
                     }) 
                 })
+        
+        getMainMenu()
     } else if (action.includes('role')) {
         addRole()
+        getMainMenu()
     } else {
         addEmployee()
+        getMainMenu()
     }
 }
 
-/* function update(action){
-    inquirer  
-        .prompt(questions.update)
-        .then(data =>{
+function update(){
+    db.query (`SELECT first_name, last_name FROM employee`, (err, rows)=>{
+        if (err){
+            console.log('Error occurred getting data')
+        }else{
+            let employees = setValue(rows)
+            let employeesArr = employees.map((employee => {
+                return `${employee.first_name} ${employee.last_name}`
+            }))
 
+            db.query (`SELECT id, title, department_id FROM role`, (err, rows) => {
+                if (err){
+                    console.log('Error occured getting data')
+                } else {
+                    let roleInfo = setValue(rows);
+                    let departmentIdArr = roleInfo.map((role => {
+                        return role.department_id
+                    }))
+                    let titleArr = roleInfo.map((role => {
+                        return role.title
+                    }))
 
-            db.query(`UPDATE employee SET ${} WHERE id = {}`, (err, results) => 
-            err ? console.log(err) : console.log('Employee info updated'))
-        })
-} */
+            let questions = [{
+                type: 'list',
+                name:'employee',
+                message:'Which employee would you like to update?',
+                choices: employeesArr  
+            },
+            {
+                type: 'list',
+                name:'newRole',
+                message:'Employee\'s new role:',
+                choices: titleArr
+            }]
+
+            employeesArr.unshift('None')
+
+            questions.push({
+                type: 'list',
+                name:'manager',
+                message:'Manager:',
+                choices: employeesArr
+            })
+            
+            inquirer
+                .prompt(questions)
+                .then(data =>{
+                    let depId = departmentIdArr[titleArr.indexOf(data.newRole)]
+                    let roleId = titleArr.indexOf(data.newRole) + 1
+                    let managerId = employeesArr.indexOf(data.manager)
+                             if (managerId == 0){
+                                managerId = null
+                            }
+                    let employeeId = employeesArr.indexOf(data.employee)
+                    db.query(`UPDATE employee SET role_id=${roleId}, department_id=${depId}, manager_id=${managerId} WHERE id=${employeeId}`, (err) =>{
+                        err ? console.log('Error updating employee') : `Employee information has been updated.`
+                    })
+                })
+        }})
+    }})
+
+    getMainMenu()
+}
 
 function addRole(){
     db.query (`SELECT department_name FROM department`, (err, rows) => {
@@ -80,10 +138,8 @@ function addRole(){
                             err ? console.log(err) : console.log('New role added')
                         }) 
                     })
-            
         }
     })
-
 }
 
 function addEmployee(){
@@ -158,7 +214,8 @@ function getMainMenu(){
         .prompt(questions.mainMenu)
         .then(data =>{ 
             if(data.action == 'Quit'){
-                console.log('Goodbye!');
+                console.log('Goodbye!')
+                process.exit();
             }else if (data.action.includes('View')){
                 view(data.action)
             } else if (data.action.includes('Add')) {
@@ -168,32 +225,6 @@ function getMainMenu(){
             }
         })
 }
-
-/* async function getManagers(){
-    db.query (`SELECT first_name, last_name FROM employee`,(err, rows) => {
-    if (err){
-        console.log('Error occured getting data')
-    } else {
-            let employees = setValue(rows);
-            let managersArr = employees.map((employee => {
-                return `${employee.first_name} ${employee.last_name}`
-            }))
-            managersArr.unshift('None')
-            return managersArr;
-            }})
-
-        } */
-
-/* async function addEmployeeQuestions() {
-    try{
-        let roleInfo = await db.query (`SELECT id, title, department_id FROM role`)
-        let employees = await db.query (`SELECT first_name, last_name FROM employee`)
-        console.log(roleInfo)
-        console.log(employees)
-    } finally{
-
-    }
-} */
 
 module.exports.view = view;
 module.exports.add = add;
