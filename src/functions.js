@@ -2,8 +2,7 @@ const inquirer = require('inquirer')
 const questions = require('./questions')
 const mysql = require('mysql2')
 const cTable =require('console.table')
-const util = require('util')
-const Employee = require('../../../week10/team-profile-generator/lib/employee')
+
 
 const db = mysql.createConnection(
     {
