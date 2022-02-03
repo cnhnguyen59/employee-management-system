@@ -1,6 +1,7 @@
 const inquirer = require('inquirer')
 const questions = require('./questions')
 const mysql = require('mysql2')
+const cTable =require('console.table')
 const util = require('util')
 const Employee = require('../../../week10/team-profile-generator/lib/employee')
 
@@ -14,12 +15,32 @@ const db = mysql.createConnection(
 )
 
 function view(action){
-    let option = action.split(' ')[2].slice(0,-1)
+    /* let option = action.split(' ')[2].slice(0,-1)
 
     db.query (`SELECT * FROM ${option}`, (err, results) =>
-    err ? console.log(err) : console.log(results))
+    err ? console.log(err) : console.table(results)) */
 
-    getMainMenu()
+    if (action.includes('department')){
+        db.query (`SELECT * FROM department`, (err, results) =>
+            err ? console.log(err) : console.table(results))
+    }else if(action.includes('roles')){
+        db.query (`SELECT role.id, role.title, role.salary, department.department_name
+        FROM role 
+        JOIN department ON role.department_id = department.id`, (err, results) =>
+            err ? console.log(err) : console.table(results))
+    }else{
+        db.query(`SELECT 
+        e.id AS id, e.first_name AS first_name, e.last_name AS last_name, role.title, role.salary, department.department_name, 
+        CONCAT(m.last_name, ', ', m.first_name) AS manager
+    FROM
+        employee e
+    JOIN role ON e.role_id = role.id
+    JOIN department on e.department_id = department.id
+    LEFT OUTER JOIN employee m ON 
+        m.id = e.manager_id`, (err, result)=>{
+            err ? console.log(err) : console.table(result)
+        })
+    }
 }
 
 function add(action){
@@ -38,13 +59,10 @@ function add(action){
                     }) 
                 })
         
-        getMainMenu()
     } else if (action.includes('role')) {
         addRole()
-        getMainMenu()
     } else {
         addEmployee()
-        getMainMenu()
     }
 }
 
@@ -108,8 +126,6 @@ function update(){
                 })
         }})
     }})
-
-    getMainMenu()
 }
 
 function addRole(){
