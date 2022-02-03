@@ -15,11 +15,6 @@ const db = mysql.createConnection(
 )
 
 function view(action){
-    /* let option = action.split(' ')[2].slice(0,-1)
-
-    db.query (`SELECT * FROM ${option}`, (err, results) =>
-    err ? console.log(err) : console.table(results)) */
-
     if (action.includes('department')){
         db.query (`SELECT * FROM department`, (err, results) =>
             err ? console.log(err) : console.table(results))
@@ -234,10 +229,13 @@ function getMainMenu(){
                 process.exit();
             }else if (data.action.includes('View')){
                 view(data.action)
+                setTimeout(()=>{getMainMenu()}, 1000)
             } else if (data.action.includes('Add')) {
                 add(data.action)
+                setTimeout(()=>{getMainMenu()}, 1000)
             } else {
                 update()
+                setTimeout(()=>{getMainMenu()}, 1000)
             }
         })
 }
