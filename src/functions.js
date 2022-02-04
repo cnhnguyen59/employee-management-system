@@ -1,7 +1,6 @@
 const inquirer = require('inquirer')
 const questions = require('./questions')
 const mysql = require('mysql2')
-const util = require('util')
 const cTable =require('console.table')
 
 const db = mysql.createConnection(
@@ -13,17 +12,27 @@ const db = mysql.createConnection(
     }
 )
 
-const query = util.promisify(db.query).bind(db)
-
 function view(action){
     if (action.includes('department')){
-        db.query (`SELECT * FROM department`, (err, results) =>
-            err ? console.log(err) : console.table(results))
+        db.query (`SELECT * FROM department`, (err, results) =>{
+            if (err){
+                console.log('Error retrieving roles')
+            } else{
+                console.log(console.table(results))
+                getMainMenu()
+            }
+        })
     }else if(action.includes('roles')){
         db.query (`SELECT role.id, role.title, role.salary, department.department_name
         FROM role 
-        JOIN department ON role.department_id = department.id`, (err, results) =>
-            err ? console.log(err) : console.table(results))
+        JOIN department ON role.department_id = department.id`, (err, results) => {
+            if (err){
+                console.log('Error retrieving departments')
+            } else{
+                console.log(console.table(results))
+                getMainMenu()
+            }
+        })
     }else{
         db.query(`SELECT 
         e.id AS id, e.first_name AS first_name, e.last_name AS last_name, role.title, role.salary, department.department_name, 
@@ -33,8 +42,13 @@ function view(action){
     JOIN role ON e.role_id = role.id
     JOIN department on e.department_id = department.id
     LEFT OUTER JOIN employee m ON 
-        m.id = e.manager_id`, (err, result)=>{
-            err ? console.log(err) : console.table(result)
+        m.id = e.manager_id`, (err, results)=>{
+            if (err){
+                console.log('Error retrieving employees')
+            } else{
+                console.log(console.table(results))
+                getMainMenu()
+            }
         })
     }
 }
@@ -209,7 +223,6 @@ function addEmployee(){
                     .prompt(questions.employee)
                     .then(data =>
                         {  
-                            console.log('after inquirer' + managersArr)
                             let depId = departmentIdArr[titleArr.indexOf(data.title)]
                             let roleId = titleArr.indexOf(data.title) + 1
                             let managerId = managersArr.indexOf(data.manager)
@@ -248,13 +261,10 @@ function getMainMenu(){
                 process.exit();
             }else if (data.action.includes('View')){
                 view(data.action)
-                setTimeout(()=>{getMainMenu()}, 1000)
             } else if (data.action.includes('Add')) {
                 add(data.action)
-                /* setTimeout(()=>{getMainMenu()}, 1000) */
             } else {
                 update()
-                /* setTimeout(()=>{getMainMenu()}, 1000) */
             }
         })
 }
