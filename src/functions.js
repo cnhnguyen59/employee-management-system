@@ -1,8 +1,8 @@
 const inquirer = require('inquirer')
 const questions = require('./questions')
 const mysql = require('mysql2')
+const util = require('util')
 const cTable =require('console.table')
-
 
 const db = mysql.createConnection(
     {
@@ -12,6 +12,8 @@ const db = mysql.createConnection(
         database: 'employees_db'
     }
 )
+
+const query = util.promisify(db.query).bind(db)
 
 function view(action){
     if (action.includes('department')){
@@ -48,8 +50,12 @@ function add(action){
             }])
             .then(data =>
                 {
-                    db.query(`INSERT INTO department (department_name) VALUES ('${data.newDep}')`, (err) => {
-                        err ? console.log(err) : console.log('New department added')
+                    db.query(`INSERT INTO department (department_name) VALUES ('${data.newDep}')`, (err) => { if (err){
+                     console.log(err)
+                    } else {
+                        console.log('New department added')
+                        getMainMenu()
+                    }
                     }) 
                 })
         
@@ -114,8 +120,12 @@ function update(){
                                 managerId = null
                             }
                     let employeeId = employeesArr.indexOf(data.employee)
-                    db.query(`UPDATE employee SET role_id=${roleId}, department_id=${depId}, manager_id=${managerId} WHERE id=${employeeId}`, (err) =>{
-                        err ? console.log('Error updating employee') : `Employee information has been updated.`
+                    db.query(`UPDATE employee SET role_id=${roleId}, department_id=${depId}, manager_id=${managerId} WHERE id=${employeeId}`, (err) =>{ if (err){
+                        console.log('Error updating employee')
+                       } else {
+                           console.log(`Employee information has been updated.`)
+                           getMainMenu()
+                       }
                     })
                 })
         }})
@@ -145,7 +155,12 @@ function addRole(){
                     {
                         let dep_id = departmentArr.indexOf(data.department) + 1
                         db.query(`INSERT INTO role (title, salary, department_id) VALUES ('${data.title}', '${data.salary}', ${dep_id})`, (err) => {
-                            err ? console.log(err) : console.log('New role added')
+                            if (err){
+                                console.log('Error adding role')
+                               } else {
+                                   console.log('New role added')
+                                   getMainMenu()
+                               }
                         }) 
                     })
         }
@@ -203,7 +218,12 @@ function addEmployee(){
                                 managerId = null
                             } 
                             db.query(`INSERT INTO employee (first_name, last_name, role_id, department_id, manager_id) VALUES ('${data.firstName}', '${data.lastName}',${roleId}, ${depId}, ${managerId})`, (err) => {
-                                err ? console.log(err) : console.log('New employee added')
+                                if (err){
+                                    console.log('Error adding employee')
+                                   } else {
+                                       console.log('New employee added')
+                                       getMainMenu()
+                                   }
                             }) 
                         })
                 }
@@ -231,10 +251,10 @@ function getMainMenu(){
                 setTimeout(()=>{getMainMenu()}, 1000)
             } else if (data.action.includes('Add')) {
                 add(data.action)
-                setTimeout(()=>{getMainMenu()}, 1000)
+                /* setTimeout(()=>{getMainMenu()}, 1000) */
             } else {
                 update()
-                setTimeout(()=>{getMainMenu()}, 1000)
+                /* setTimeout(()=>{getMainMenu()}, 1000) */
             }
         })
 }

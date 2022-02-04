@@ -2,7 +2,7 @@ const mainMenu = [{
     type:'list',
     name:'action',
     message:'Pick an action:',
-    choices: ['View all departments', 'View all roles', 'View all employees', 'Add a department', 'Add a role', 'Add employee role', 'Update an employee', 'Quit']
+    choices: ['View all departments', 'View all roles', 'View all employees', 'Add a department', 'Add a role', 'Add employee', 'Update an employee', 'Quit']
 }]
 
 const role = [{
